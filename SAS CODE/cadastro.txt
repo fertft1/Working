@@ -1,0 +1,13 @@
+DATA WORK.PARAMETROS_RDS;
+	INPUT AGRUPAMENTO $5. SERVICO $10. SEGMENTO NATUREZA $4. SLA $2. JANELA_INI JANELA_FIM FECHAMENTO;
+	DATALINES;
+mod01 abertura  1 0230D2 8 19 20
+mod01 abertura  2 0230D0 8 19 20
+mod01 abertura  3 023014 8 19 20
+mod01 abertura  3 023014 8 19 20
+mod01 abertura  4 0230D1 8 19 20
+	;
+RUN;
+
+/*Ordenar arquivos para utilizar posteriormente o merge*/
+PROC SORT data=work.parametros_rds noequals; by servico segmento natureza; run;

@@ -1,0 +1,8 @@
+PROC SORT data=work.add_sla(KEEP=agrupamento) OUT=WORK.AGRUPAMENTOS NOEQUALS NODUPKEY; BY agrupamento; RUN;
+
+PROC SORT data=work.add_sla NOEQUALS NODUPKEY; BY agrupamento dia_final; RUN;
+PROC SUMMARY DATA=WORK.add_sla;
+	by agrupamento dia_final;
+	output out=work.teste(rename = (_freq_ = DEMANDA) drop = _type_) ;
+run;
+

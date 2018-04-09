@@ -1,0 +1,105 @@
+PROC SORT DATA=work.base; BY SERVICO SEGMENTO NATUREZA; RUN;
+
+data work.base;
+	set work.base;
+run;
+
+DATA WORK.ADD_PARAMETROS;
+	MERGE WORK.BASE WORK.PARAMETROS_RDS;
+	by servico segmento natureza;
+RUN;
+
+DATA WORK.ADD_SLA;
+	SET WORK.ADD_PARAMETROS;
+	
+	IF notdigit(sla) = 1 THEN DO;
+		dias_avancar = INPUT(substr(sla,2,1),8.);
+		tipo_sla = 'd';
+	END;
+	ELSE DO;
+		horas_avancar = INPUT(substr(sla,1,2),8.);
+		tipo_sla = 'h';
+	END;
+	
+	IF hour(data_entrada) >= janela_fim THEN DO;
+		
+		IF tipo_sla = 'd' THEN DO;
+			
+			/*Encontrar o próximo dia -- não pode ser sábado ou domingo*/
+			dia_start = DATEPART(data_entrada);
+			DO UNTIL(WEEKDAY(dia_start) NE 1 AND WEEKDAY(dia_start) NE 7);
+				dia_start = intnx('DAY',dia_start,1,'sameday');
+			END;
+			
+			/*Avançar os dias disponíveis*/
+			DO WHILE(dias_avancar NE 0);
+				dia_start = intnx('DAY',dia_start,1);
+				IF weekday(dia_start) > 1 AND weekday(dia_start) < 7 THEN dias_avancar = dias_avancar - 1; 
+			END;
+			
+			dia_final = DHMS(dia_start,fechamento,0,0);
+			
+		END;
+		ELSE IF tipo_sla = 'h' THEN DO;
+			
+			/*Encontrar o próximo dia -- não pode ser sábado ou domingo*/
+			dia_start = DATEPART(data_entrada);
+			DO UNTIL(WEEKDAY(dia_start) NE 1 AND WEEKDAY(dia_start) NE 7);
+				dia_start = intnx('DAY',dia_start,1,'sameday');
+			END;
+			
+			dia_start = DHMS(dia_start,janela_ini,0,0);
+
+			DO WHILE(horas_avancar NE 0);
+				dia_start = intnx('HOUR', dia_start,1);
+				
+				IF weekday(datepart(dia_start)) > 1 AND weekday(datepart(dia_start)) < 7 THEN DO;
+					IF hour(dia_start) >= janela_ini AND hour(dia_start) <= janela_fim THEN DO;
+					 	horas_avancar = horas_avancar - 1;
+					 END;
+				END;
+			END;
+			
+			dia_final = dia_start;
+			dia_start = datepart(dia_start);
+			
+		END;
+		
+	END;
+	ELSE DO;
+		IF tipo_sla = 'd' THEN DO;
+			
+			dia_start = datepart(data_entrada);
+			DO WHILE(dias_avancar NE 0);
+				dia_start = intnx('DAY',dia_start,1);
+				IF weekday(dia_start) > 1 AND weekday(dia_start) < 7 THEN dias_avancar = dias_avancar - 1; 
+			END;
+			
+			dia_final = DHMS(dia_start,fechamento,0,0);
+			
+		END;
+		ELSE IF tipo_sla = 'h' THEN DO;
+		
+			dia_start = data_entrada;
+
+			DO WHILE(horas_avancar NE 0);
+				dia_start = intnx('HOUR', dia_start,1);
+				
+				IF weekday(datepart(dia_start)) > 1 AND weekday(datepart(dia_start)) < 7 THEN DO;
+					IF hour(dia_start) >= janela_ini AND hour(dia_start) <= janela_fim THEN DO;
+					 	horas_avancar = horas_avancar - 1;
+					 END;
+				END;
+			END;
+			
+			dia_final = dia_start;
+			dia_start = datepart(dia_start);
+			
+		END;
+	END;
+	
+	format dia_start DATE8. dia_final DATETIME18.;
+	
+	drop dias_avancar horas_avancar tipo_sla dia_start;
+	
+RUN;

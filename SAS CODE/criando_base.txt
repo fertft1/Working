@@ -1,0 +1,29 @@
+DATA work.base;
+	INPUT SERVICO $10. SEGMENTO NATUREZA $4.
+	;
+	DATALINES;
+abertura  1 0230
+abertura  2 0230
+abertura  2 0230
+abertura  4 0230
+abertura  3 0230
+abertura  3 0230
+	;
+RUN;
+
+data work.base;
+	set work.base;
+	
+	IF _N_ < 3 THEN
+		data_entrada = 	'06APR18:18:00:00'dt;
+	ELSE IF _N_ < 4 THEN
+		data_entrada = 	'05APR18:18:05:00'dt;
+	ELSE IF _N_ < 5 THEN
+		data_entrada = 	'05APR18:18:05:00'dt;
+	ELSE 
+		data_entrada = 	'05APR18:18:00:00'dt;
+	;
+	
+	format data_entrada datetime18.;
+	
+run;
