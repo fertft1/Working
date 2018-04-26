@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		
+		<script src="https://d3js.org/d3.v4.min.js"></script>
+		
+		<script type="text/javascript">
+			
+			function draw(data){
+				
+				var margin = {top:50,right:10,bottom:10,left:50},
+					width = 1000,
+					height = 800;
+				
+				var svg = d3.select(".graph")
+							.append("svg")
+							.attr("class","svg")
+							.attr("width", width + margin.right + margin.left)
+							.attr("height", height + margin.bottom + margin.top);
+									
+				var d_current = new Date
+				var x =  d3.scaleLinear()
+						.range([0,width - margin.right - margin.left])
+						.domain([d_current,d3.max(data, function(d){return d["dia_final"];})]);	
+				
+				var y = d3.scaleLinear()
+						.range([0,height - margin.top - margin.bottom])
+						.domain([0,data.length])
+						
+				var g = d3.select('svg')
+						.append('g')
+						.attr("transform","translate("+margin.left+","+margin.top+")");
+				
+				/*ticks*/
+				var xAxis = d3.axisBottom(x).ticks(10).tickSize(5).tickFormat(d3.timeFormat("%B %d, %H:%M"));
+				
+				debugger;
+				g.append("g")
+					.attr("class","Xaxis")
+					.attr("transform","translate(0," + (height - margin.bottom - margin.top) +")")
+					.call(xAxis);
+				
+				debugger;
+				g.selectAll("rect")
+					.data(data)
+					.enter()
+					.append("rect")
+					.attr("class","rect")
+					.attr("x",0)
+					.attr("y", function(d,i){return y(i);})
+					.attr("width",function(d){return x(d["dia_final"]);})
+					.attr("height",4);
+				
+			};
+		</script>
+	</head>
+	<body>
+		<div class="graph">
+			<script type="text/javascript">
+			
+				var parseformat = d3.timeParse("%Y-%m-%d %H:%M:%S");
+				
+				d3.csv('rds.csv',
+					function(d){
+						d["data_entrada"] = parseformat( d["data_entrada"])
+						d["dia_final"] = parseformat( d["dia_final"])
+						return d;
+					}
+					,draw);
+					
+			</script>
+		</div>
+	</body>
+</html>
