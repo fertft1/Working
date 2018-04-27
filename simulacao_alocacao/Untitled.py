@@ -1,5 +1,6 @@
 import pandas as pd
 from collections import defaultdict
+import datetime as dt
 
 df = pd.read_csv('rds.csv')
 df.sort_values('dia_final', ascending=True, inplace=True)
@@ -40,14 +41,10 @@ class grupos(object):
                 #guardar da demanda tratada
                 self.tratada[minuto].append(demanda[skill].pop(0))
 
+g1 = grupos(2,['MODULO 1','MODULO 2'])
+for i in range(500):
+    g1.alocar(i,100,demanda)
 
-g1 = grupos(5,['MODULO 1','MODULO 2'])
-g1.alocar(1,1,demanda)
-g1.ocupados
-demanda
-
-print(g1.alocar(2,1,demanda))
-print(g1.ocupados)
-print(demanda)
-print(g1.tratada)
-
+current = dt.datetime(2018,4,26,8,0,0)
+for i in g1.tratada.keys():
+    print(i,current, current + dt.timedelta(minutes=i))

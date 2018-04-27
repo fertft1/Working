@@ -2,14 +2,33 @@
 <html>
 	<head>
 		
-		<script src="https://d3js.org/d3.v4.min.js"></script>
+		<style>
+			.graph{
+				background-color:white;
+			}
+			.title{
+				font-size:35px;
+				color:steelblue;
+			}
+			.rect{
+				fill:rgb(200,200,200);
+			}
+			.atendidas{
+				fill:red;
+				fill-opacity:0.6;
+			}
+		</style>
+		
+		<script src="d3.js"></script>
 		
 		<script type="text/javascript">
+		
+			var rds_atendidas = [];
 			
 			function draw(data){
 				
 				var margin = {top:50,right:10,bottom:10,left:50},
-					width = 1000,
+					width = 1200,
 					height = 800;
 				
 				var svg = d3.select(".graph")
@@ -21,7 +40,7 @@
 				var d_current = new Date
 				var x =  d3.scaleLinear()
 						.range([0,width - margin.right - margin.left])
-						.domain([d_current,d3.max(data, function(d){return d["dia_final"];})]);	
+						.domain([d3.min(data, function(d){return d["data_entrada"];}),d3.max(data, function(d){return d["dia_final"];})]);	
 				
 				var y = d3.scaleLinear()
 						.range([0,height - margin.top - margin.bottom])
@@ -34,32 +53,51 @@
 				/*ticks*/
 				var xAxis = d3.axisBottom(x).ticks(10).tickSize(5).tickFormat(d3.timeFormat("%B %d, %H:%M"));
 				
-				debugger;
 				g.append("g")
 					.attr("class","Xaxis")
 					.attr("transform","translate(0," + (height - margin.bottom - margin.top) +")")
 					.call(xAxis);
 				
-				debugger;
 				g.selectAll("rect")
 					.data(data)
 					.enter()
 					.append("rect")
-					.attr("class","rect")
-					.attr("x",0)
+					.attr("class",function(d){return "rect rd" + d["id_rd"]})
+					.attr("x",function(d){return x(d["data_entrada"])})
 					.attr("y", function(d,i){return y(i);})
 					.attr("width",function(d){return x(d["dia_final"]);})
-					.attr("height",4);
+					.attr("height",10);
+					
+				rds_atendidas.forEach(function(d){
+						debugger;
+						var position = d3.select('.rd' + d['id_rd']);
+												
+						g.append('rect')
+							.attr('class','atendidas')
+							.attr('y',+position.attr('y'))
+							.attr('x', x(d['data_inicio']))
+							.attr('width',x(d['data_fim']))
+							.attr('height',10);
+					}
+				);
+				
+				
 				
 			};
 		</script>
 	</head>
 	<body>
 		<div class="graph">
+			<h1 class="title">Linha do tempo das RDS</h1>
 			<script type="text/javascript">
-			
+				
 				var parseformat = d3.timeParse("%Y-%m-%d %H:%M:%S");
 				
+				d3.csv('rds_atendidas.csv',function(d){
+						d['data_inicio'] = parseformat(d['data_inicio'])
+						d['data_fim'] = parseformat(d['data_fim'])
+						return d;},function(d){rds_atendidas = d});
+						
 				d3.csv('rds.csv',
 					function(d){
 						d["data_entrada"] = parseformat( d["data_entrada"])
