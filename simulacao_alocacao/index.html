@@ -4,19 +4,86 @@
 		
 		<style>
 			.graph{
-				background-color:white;
+				width:100%;
+				height:800px;
+				background-color:rgb(250,250,250);
+				overflow:scroll;
 			}
 			.title{
 				font-size:35px;
 				color:steelblue;
 			}
 			.rect{
-				fill:rgb(200,200,200);
+				fill:gray;
+				fill-opacity:0.5;
 			}
 			.atendidas{
-				fill:red;
-				fill-opacity:0.6;
+				fill:blue;
+				fill-opacity:1;
 			}
+			.etapa-1{
+				fill:#479600;
+			}
+			.etapa-2{
+				fill:#5d374f;
+			}
+			.etapa-3{
+				fill:#ced248;
+			}
+			.etapa-4{
+				fill:#c35c2f;
+			}
+			.etapa-5{
+				fill:#b68567;
+			}
+			
+			div.tooltip {	
+				position: absolute;			
+				text-align: left;			
+				width: 300px;					
+				height: 60px;					
+				padding: 2px;				
+				font: 12px Verdana;		
+				background: rgb(230,230,230);	
+				border: 0px;		
+				border-radius: 8px;			
+				pointer-events: none;			
+			}
+			
+			.button{
+				display: inline-block;
+				zoom: 1;
+				padding: 6px 20px;
+				margin: 0;
+				cursor: pointer;
+				border: 1px solid #bbb;
+				overflow: visible;
+				font: bold 13px arial, helvetica, sans-serif;
+				text-decoration: none;
+				white-space: nowrap;
+				color: #555;
+
+				background-color: #ddd;
+				background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255,255,255,1)), to(rgba(255,255,255,0)));
+				background-image: -webkit-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+				background-image: -moz-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+				background-image: -ms-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+				background-image: -o-linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+				background-image: linear-gradient(top, rgba(255,255,255,1), rgba(255,255,255,0));
+
+				-webkit-transition: background-color .2s ease-out;
+				-moz-transition: background-color .2s ease-out;
+				-ms-transition: background-color .2s ease-out;
+				-o-transition: background-color .2s ease-out;
+				transition: background-color .2s ease-out;
+				background-clip: padding-box; /* Fix bleeding */
+				-moz-border-radius: 3px;
+				-webkit-border-radius: 3px;
+				border-radius: 3px;
+				-moz-box-shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 2px 2px -1px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .3) inset;
+				-webkit-box-shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 2px 2px -1px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .3) inset;
+				box-shadow: 0 1px 0 rgba(0, 0, 0, .3), 0 2px 2px -1px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .3) inset;
+				text-shadow: 0 1px 0 rgba(255,255,255, .9);
 		</style>
 		
 		<script src="d3.js"></script>
@@ -24,12 +91,33 @@
 		<script type="text/javascript">
 		
 			var rds_atendidas = [];
+			var largura = 10;
+			var timeformat = d3.timeFormat("%B %d, %H:%M");
+			
+			function legend(svg,x,text,margin,classe){
+				debugger;
+				var width_local = 10;
+				var height_local = 10;
+			
+				svg.append('rect')
+				.attr('width',width_local)
+				.attr('height',height_local)
+				.attr('class',classe)
+				.attr('x',x)
+				.attr('y',margin.top*.2);
+				
+				svg.append('text')
+					.attr('x', x + width_local)
+					.attr('y',margin.top*.2 + height_local)
+					.html(text);
+				
+			};
 			
 			function draw(data){
 				
-				var margin = {top:50,right:10,bottom:10,left:50},
+				var margin = {top:40,right:10,bottom:10,left:50},
 					width = 1200,
-					height = 800;
+					height = data.length*(15);
 				
 				var svg = d3.select(".graph")
 							.append("svg")
@@ -40,7 +128,8 @@
 				var d_current = new Date
 				var x =  d3.scaleLinear()
 						.range([0,width - margin.right - margin.left])
-						.domain([d3.min(data, function(d){return d["data_entrada"];}),d3.max(data, function(d){return d["dia_final"];})]);	
+						.domain([d3.min(data, function(d){return d["data_entrada"];})
+								,d3.max(data, function(d){return d["data_final"];})]);	
 				
 				var y = d3.scaleLinear()
 						.range([0,height - margin.top - margin.bottom])
@@ -49,6 +138,19 @@
 				var g = d3.select('svg')
 						.append('g')
 						.attr("transform","translate("+margin.left+","+margin.top+")");
+						
+				/*criar legendas*/
+				legend(svg,10, 'Etapa 1',margin,'etapa-1');
+				legend(svg,80, 'Etapa 2',margin,'etapa-2');
+				legend(svg,150, 'Etapa 3',margin,'etapa-3');
+				legend(svg,220, 'Etapa 4',margin,'etapa-4');
+				legend(svg,290, 'Etapa 5',margin,'etapa-5');
+				
+					
+				
+				var div = d3.select(".graph").append("div")	
+						.attr("class", "tooltip")				
+						.style("opacity", 0);
 				
 				/*ticks*/
 				var xAxis = d3.axisBottom(x).ticks(10).tickSize(5).tickFormat(d3.timeFormat("%B %d, %H:%M"));
@@ -62,24 +164,68 @@
 					.data(data)
 					.enter()
 					.append("rect")
-					.attr("class",function(d){return "rect rd" + d["id_rd"]})
 					.attr("x",function(d){return x(d["data_entrada"])})
+					.attr("class",function(d){return "rect rd" + d["numerocaso"] + " " + d["etapa"].replace(' ','-')})
 					.attr("y", function(d,i){return y(i);})
-					.attr("width",function(d){return x(d["dia_final"]);})
-					.attr("height",10);
+					.attr("width",function(d){return x(d["data_final"]);})
+					.attr("height",largura)
+					.on("mouseover",function(d){
+						div.transition().duration(200).style("opacity", .9);
+						
+						div.html("Id rd: " + d['numerocaso'] + "<br>" +
+								"etapa: " + d['etapa'] + "<br>" +
+								"Data entrada: " + timeformat(d['data_entrada']) 
+								+ "<br>" + "Data final: " + timeformat(d['data_final']))								
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+					})
+					.on("mouseout", function(d){		
+						div.transition()		
+						.duration(500)		
+						.style("opacity", 0);	
+					});
 					
+				/*Adicionar o código da rd*/
+				
+				data.forEach(function(d){
+					var position = d3.select('.rd' + d['numerocaso']);
+					
+					g.append('text')
+						.attr('x',-margin.left)
+						.attr('y',+position.attr('y')+largura*.8)
+						.style('font-size',10)
+						.html(d['numerocaso']);
+				});
+				
+				/*Colocar linha para marcar a data atual*/
+				var today = new Date
+				
+				debugger;
+				svg.append('rect')
+					.attr('x',x(today.getTime()))
+					.attr('y',margin.top)
+					.attr('height',height - margin.top - margin.bottom)
+					.attr('width',1);	
+				
+				svg.append('text')
+					.attr('x',x(today.getTime()))
+					.attr('y',margin.top-1)
+					.attr('width',50)
+					.attr('height',50)
+					.html('Datetime atual');
+				
+					/*
 				rds_atendidas.forEach(function(d){
-						debugger;
-						var position = d3.select('.rd' + d['id_rd']);
+						var position = d3.select('.rd' + d['numerocaso']);
 												
 						g.append('rect')
 							.attr('class','atendidas')
-							.attr('y',+position.attr('y'))
+							.attr('y',+position.attr('y')+5)
 							.attr('x', x(d['data_inicio']))
-							.attr('width',x(d['data_fim']))
-							.attr('height',10);
+							.attr('width',x(d['data_final']))
+							.attr('height',5);
 					}
-				);
+				)*/;
 				
 				
 				
@@ -87,25 +233,30 @@
 		</script>
 	</head>
 	<body>
+		<h1 class="title">Linha do tempo das RDs</h1>
+		
+		<div>
+			<button class="button">RDs</button>
+		</div>
+		
 		<div class="graph">
-			<h1 class="title">Linha do tempo das RDS</h1>
 			<script type="text/javascript">
 				
 				var parseformat = d3.timeParse("%Y-%m-%d %H:%M:%S");
-				
+					
 				d3.csv('rds_atendidas.csv',function(d){
-						d['data_inicio'] = parseformat(d['data_inicio'])
-						d['data_fim'] = parseformat(d['data_fim'])
-						return d;},function(d){rds_atendidas = d});
-						
-				d3.csv('rds.csv',
+					d['data_inicio'] = parseformat(d['data_inicio'])
+					d['data_final'] = parseformat(d['data_final'])
+					return d;},function(d){rds_atendidas = d});
+					
+				d3.csv('demanda.csv',
 					function(d){
 						d["data_entrada"] = parseformat( d["data_entrada"])
-						d["dia_final"] = parseformat( d["dia_final"])
+						d["data_final"] = parseformat( d["data_final"])
 						return d;
 					}
 					,draw);
-					
+				
 			</script>
 		</div>
 	</body>
