@@ -1,114 +1,11 @@
-
-# coding: utf-8
-
-# In[1]:
-
-
 from collections import defaultdict, namedtuple,Counter
 from datetime import datetime, timedelta
 import numpy as np
 import csv
 
-
-# # Criar demanda
-# Para criar a demanda preciso criar 3 variáveis
-# 1. data_criacao: dia e hora que a demanda entrou no sistema
-# 
-# 2. NumeroCaso: número de identificação de uma demanda
-# 
-# Esses são os campos com que o **salesforce** trabalha no sistema FIFO (first in first out)
-
-# In[2]:
-
-
-np.random.seed(1023)
-dia_atual = 28
-sortear = lambda x,y:np.random.randint(x,y)
-ntuple = namedtuple('demanda',['numerocaso','poder','etapa','data_entrada','data_final'])
-demanda = []
-add_minutes = 150
-
-for i in range(3000):
-    #sortear o dia
-    dia = sortear(dia_atual-2,dia_atual+1)
-
-    #sortear a hora
-    hora = sortear(8,20)
-
-    #sortear o minuto 
-    minuto = sortear(0,60)
-
-    #criar datetime
-    data_entrada = datetime(2018,4,dia,hora,minuto,0)
-    data_final = datetime(2018,4,dia,hora,minuto,0) + timedelta(minutes = add_minutes)
-    
-    #criar número do caso
-    numerocaso: str = ''.join([str(i) for i in np.random.randint(0,10,size=9)])
-    
-    #criar o tipo de poder que será utilizado
-    poder = 'poderes ' + str(sortear(1,6))
-    
-    #criar skill que pode tratar da demanda
-    etapa = sortear(0,2)
-    
-    if etapa == 0:
-        #está na etapa inicial
-        demanda.append(ntuple(numerocaso=numerocaso, 
-                              poder=poder, 
-                              etapa='etapa {}'.format(1),
-                              data_entrada=data_entrada, 
-                              data_final=data_final))
-    elif etapa == 1:
-        #sortear quantas etapas secundárias existem
-        n_etapas = np.random.randint(2,6)
-        
-        for i in range(2,n_etapas+1):
-            demanda.append(ntuple(numerocaso=numerocaso,
-                                    data_entrada=data_entrada,
-                                    etapa = 'etapa {}'.format(i),
-                                    data_final = data_final, 
-                                    poder = poder))
-
-
-# # Ordenar
-# É necesssário ordenar por hora de entrada para criar a fila FIFO do salesforce
-
-# In[3]:
-
-
-demanda.sort(key=lambda x:x.data_entrada)
-
-
-# In[4]:
-
-
-demanda[0:5]
-
-
-# # Exportar
-
-# In[5]:
-
-
-formato = '%Y-%m-%d %H:%M:%S'
-
-with open('demanda.csv','w') as csvfile:
-    writer = csv.writer(csvfile, delimiter=',',lineterminator='\n')
-    
-    writer.writerow(['numerocaso','poder','etapa','data_entrada','data_final'])
-    
-    for i in demanda:
-        writer.writerow([i.numerocaso,i.poder,i.etapa,i.data_entrada.strftime(formato),i.data_final.strftime(formato)])
-
-
-# # Importar
-# As demandas criadas anteriormente são um exemplo de arquivo de entrada a ser importado
-# 
-# Agora começa o código que será utilizado em produção
-
-# In[6]:
-
-
+#Importar
+#As demandas criadas anteriormente são um exemplo de arquivo de entrada a ser importado
+#Agora começa o código que será utilizado em produção
 unordered_demanda = []
 with open('demanda.csv','r') as csvfile:
     reader = csv.reader(csvfile)
@@ -120,11 +17,7 @@ with open('demanda.csv','r') as csvfile:
 unordered_demanda.sort(key=lambda x:x[3])
 
 
-# # Criar dicionário com as demandas ordenadas
-
-# In[7]:
-
-
+#Criar dicionário com as demandas ordenadas
 demanda = defaultdict(list)
 for row in unordered_demanda:
     if row[2] == 'etapa 1':
@@ -134,14 +27,9 @@ for row in unordered_demanda:
         demanda[row[2]].append(row[0])
 
 
-# # Criar colaboradores
-# 
-# Cada grupo tem uma quantidade de pessoas que seguem os mesmos **skills** e **proficiência**.
-# A cada momento do planejamento o grupo recebe as demandas pendentes e segue a ordem de proficiência para alocar a quantidade de pessoas disponíveis pelo tempo da tarefa.
-
-# In[8]:
-
-
+#Criar colaboradores
+#Cada grupo tem uma quantidade de pessoas que seguem os mesmos **skills** e **proficiência**.
+#A cada momento do planejamento o grupo recebe as demandas pendentes e segue a ordem de proficiência para alocar a quantidade de pessoas disponíveis pelo tempo da tarefa.
 class grupo_trabalho(object):
     
     def __init__(self, n_colaboradores, skills_tma):
@@ -171,12 +59,26 @@ class grupo_trabalho(object):
         for skill in self.skills:
             
             #atribuir a rd
-            for rd in demanda[skill]:
+            for ii, rd in enumerate(demanda[skill]):
                 #Verificando se existem colaboradores disponíveis e existem demandas para o skill
+                
                 if self.disponiveis > 0:
                     
                     #Seguindo o FIFO -- descarto primeiro da lista que foi ordenada previamente
-                    #print(skill, demanda[skill].pop(0))
+                    #Necessário analisar se é uma etapa de poderes ou conferência para propagar a demanda
+                    if skill.startswith('poderes'):
+                        aux_demanda = demanda[skill].pop(ii)
+                            
+                        demanda['etapa 2'].append(aux_demanda)
+                        demanda['etapa 3'].append(aux_demanda)
+                        demanda['etapa 4'].append(aux_demanda)
+                        demanda['etapa 5'].append(aux_demanda)
+                        
+                    elif skill.startswith('etapa'):
+                        demanda[skill].pop(ii)
+                        
+                    else:
+                        print('Cadastro inválido para skill: {}'.format(skill))
                     
                     #atribuir demanda -- minuto em que a demanda foi passada
                     self.atendidas[minuto].append([rd,skill]) 
@@ -231,14 +133,9 @@ class grupos(grupo_trabalho):
             
             for ii in dataset:
                 spamwriter.writerow(ii)
-        
 
 
-# # Criar grupos de trabalho
-
-# In[9]:
-
-
+#Criar grupos de trabalho
 g = grupos()
 
 skills_tma = {'poderes 1':15,'etapa 2':5, 'etapa 3':2, 'etapa 4':3, 'etapa 5':5}
@@ -262,21 +159,7 @@ g.start_group('grupo 6', 10, skills_tma)
 
 # # Executar demanda
 # Abaixo o código que executa a demanda
+g.executar_demandas(minutos=2000,demanda=demanda)
 
-# In[12]:
-
-
-g.executar_demandas(minutos=180,demanda=demanda)
-
-
-# In[13]:
-
-
-g.exportar_csv(filename='teste.csv',current_time=datetime(2018,4,6,0,0,0))
-
-
-# In[ ]:
-
-
-
-
+#exportar csv
+g.exportar_csv(filename='teste.csv',current_time=datetime(2018,4,28,8,0,0))

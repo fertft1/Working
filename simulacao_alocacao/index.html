@@ -95,7 +95,6 @@
 			var timeformat = d3.timeFormat("%B %d, %H:%M");
 			
 			function legend(svg,x,text,margin,classe){
-				debugger;
 				var width_local = 10;
 				var height_local = 10;
 			
@@ -126,10 +125,12 @@
 							.attr("height", height + margin.bottom + margin.top);
 									
 				var d_current = new Date
+				
+				debugger;
 				var x =  d3.scaleLinear()
 						.range([0,width - margin.right - margin.left])
 						.domain([d3.min(data, function(d){return d["data_entrada"];})
-								,d3.max(data, function(d){return d["data_final"];})]);	
+								,d3.max(rds_atendidas, function(d){return d["data_fim"]})]);	
 				
 				var y = d3.scaleLinear()
 						.range([0,height - margin.top - margin.bottom])
@@ -146,19 +147,21 @@
 				legend(svg,220, 'Etapa 4',margin,'etapa-4');
 				legend(svg,290, 'Etapa 5',margin,'etapa-5');
 				
-					
-				
 				var div = d3.select(".graph").append("div")	
 						.attr("class", "tooltip")				
 						.style("opacity", 0);
 				
 				/*ticks*/
-				var xAxis = d3.axisBottom(x).ticks(10).tickSize(5).tickFormat(d3.timeFormat("%B %d, %H:%M"));
+				var xAxis = d3.axisBottom(x).ticks(20).tickSize(5).tickFormat(d3.timeFormat("%B %d, %H:%M"));
 				
 				g.append("g")
 					.attr("class","Xaxis")
 					.attr("transform","translate(0," + (height - margin.bottom - margin.top) +")")
-					.call(xAxis);
+					.call(xAxis)
+					.selectAll('text')
+					.attr('transform','rotate(45)')
+					.style("text-anchor","start")
+					.style("font-size",10);
 				
 				g.selectAll("rect")
 					.data(data)
@@ -167,7 +170,7 @@
 					.attr("x",function(d){return x(d["data_entrada"])})
 					.attr("class",function(d){return "rect rd" + d["numerocaso"] + " " + d["etapa"].replace(' ','-')})
 					.attr("y", function(d,i){return y(i);})
-					.attr("width",function(d){return x(d["data_final"]);})
+					.attr("width",function(d){return x(d["data_final"])-x(d["data_entrada"]);})
 					.attr("height",largura)
 					.on("mouseover",function(d){
 						div.transition().duration(200).style("opacity", .9);
@@ -176,7 +179,7 @@
 								"etapa: " + d['etapa'] + "<br>" +
 								"Data entrada: " + timeformat(d['data_entrada']) 
 								+ "<br>" + "Data final: " + timeformat(d['data_final']))								
-						.style("left", (d3.event.pageX) + "px")
+						.style("left", (d3.event.pageX) +25 + "px")
 						.style("top", (d3.event.pageY - 28) + "px");
 					})
 					.on("mouseout", function(d){		
@@ -186,7 +189,6 @@
 					});
 					
 				/*Adicionar o código da rd*/
-				
 				data.forEach(function(d){
 					var position = d3.select('.rd' + d['numerocaso']);
 					
@@ -213,19 +215,36 @@
 					.attr('width',50)
 					.attr('height',50)
 					.html('Datetime atual');
-				
-					/*
+					
 				rds_atendidas.forEach(function(d){
-						var position = d3.select('.rd' + d['numerocaso']);
-												
+						var position = d3.select('.rd' + d['rd']);
+											
 						g.append('rect')
 							.attr('class','atendidas')
 							.attr('y',+position.attr('y')+5)
 							.attr('x', x(d['data_inicio']))
-							.attr('width',x(d['data_final']))
-							.attr('height',5);
+							.attr('width',x(d['data_fim']) - x(d['data_inicio']))
+							.attr('height',5)
+							.on("mouseover",function(d){
+						
+							div.transition()
+							.duration(200)
+							.style("opacity", .9);
+						
+							div.html("Id rd: " + d['rd'] + "<br>" 
+							+ "Data inicio: " 
+							+ timeformat(d['data_fim']) + "<br>" 
+							+ "Data final: " + timeformat(d['data_fim']))
+							.style("left", (d3.event.pageX + 25) + "px")
+							.style("top", (d3.event.pageY - 28) + "px");
+						})
+					.on("mouseout", function(d){		
+						div.transition()		
+						.duration(500)		
+						.style("opacity", 0);	
+					});
 					}
-				)*/;
+				);
 				
 				
 				
@@ -244,9 +263,9 @@
 				
 				var parseformat = d3.timeParse("%Y-%m-%d %H:%M:%S");
 					
-				d3.csv('rds_atendidas.csv',function(d){
+				d3.csv('teste.csv',function(d){
 					d['data_inicio'] = parseformat(d['data_inicio'])
-					d['data_final'] = parseformat(d['data_final'])
+					d['data_fim'] = parseformat(d['data_fim'])
 					return d;},function(d){rds_atendidas = d});
 					
 				d3.csv('demanda.csv',
