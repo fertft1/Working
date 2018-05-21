@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		
+		<style>
+			.bar-pea{
+				fill:black;
+			}
+			.bar-cartonista, .area-bar-cartonista{
+				fill:green;
+			}
+			.bar-src, .area-bar-src{
+				fill:red;
+			}
+			.bar-limpos, .area-bar-limpos{
+				fill:blue;
+			}
+			.bar-crediario, .area-bar-crediario{
+				fill:salmon;
+			}
+			.line{
+				stroke:gray;
+				stroke-dasharray: "10,10":
+			};
+		</style>
+		
+		<script src="https://d3js.org/d3.v4.min.js"></script>
+		
+		<script type="text/javascript">
+		
+			function draw(data){
+				
+				//Criando variáveis úteis para controlar height
+				var max_height = d3.max(data,function(d){return +d["value"];}),
+					min_height = 0,
+					padding_value = 30,
+					num_variaveis = 5;
+				
+				var acm_y = [0,0,20,50,120];
+				
+				//definindo dimensions
+				var margin = {top:50, bottom: 50, left: 50, right: 50},
+					width = 900,
+					height = 600;
+				
+				//criar svg
+				d3.selectAll('.container')
+					.append('svg')
+					.attr("width",width + margin.right + margin.left)
+					.attr("height",height + margin.top + margin.bottom)
+					.attr("class","svg");
+				
+				//criando eixo x
+				var transf_x = d3.scaleLinear()
+							.range([0,width])
+							.domain([0,num_variaveis]);
+				
+				//criando eixo y
+				var transf_y = d3.scaleLinear()
+								.range([0,height])
+								.domain([0, max_height]);
+				
+				var g = d3.selectAll('.svg')
+							.append('g')
+							.attr('transform','translate(' 
+								+ margin.left +","
+								+ margin.top + ")");
+				
+				debugger;
+				g.selectAll(".bar")
+					.data(data)
+					.enter()
+					.append('rect')
+					.attr('class',function(d){return 'bar-'+d["segmento"];})
+					.attr('x', function(d,i){return margin.left;})
+					.attr('y', function(d,i){return transf_y(acm_y[i]);})
+					.attr('width', padding_value)
+					.attr('height', function(d){return transf_y(+d['value']);})
+					.on('click',function(d,i){
+									
+									if(this.getAttribute('class') != 'bar-pea' ){
+					
+										if(+this.getAttribute('x') == margin.left){
+											
+											var start_x = 'M' + this.getAttribute('x');
+											var start_y = ' ' + this.getAttribute('y');
+											var start_pt = start_x + start_y;
+											
+											g.append('path')
+												.attr('class','line line-'+this.getAttribute('class'))
+												.attr('d', start_pt + " L" +
+													(transf_x(i) + padding_value) + " " + start_y + " Z");
+													
+											debugger;
+											g.append('path')
+											.attr('class','area area-'+this.getAttribute('class'))
+											.attr('d','M'+(+this.getAttribute('x')+ padding_value)+start_y
+														+ " L" + transf_x(i) +" "+ start_y
+														+ " L" + transf_x(i) +" "
+															+(+this.getAttribute('y') + +this.getAttribute('height'))
+														+ ' L' + (+this.getAttribute('x')+padding_value) +" "
+															+ (+this.getAttribute('y')+ +this.getAttribute('height'))
+														+ " Z"
+											).attr("opacity",0.1);
+										
+											d3.select(this)
+											.transition()
+											.duration(600)
+											.attr('x', transf_x(i));
+											
+										}else{
+											
+											//remover linha
+											d3.select(".line-"+this.getAttribute('class'))
+												.transition()
+												.duration(600)
+												.remove();
+											
+											d3.select(this)
+											.transition()
+											.duration(500)
+											.attr('x',margin.left);
+										};
+									};
+								});
+			};
+			
+		</script>
+		
+	</head>
+	<body>
+		<div class="container">
+			<script type="text/javascript">	
+				d3.csv("dataset.csv",draw);
+			</script>
+		</div>
+	</body>
+</html>
