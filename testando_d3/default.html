@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Círculos</title>
+	<meta charset="utf-8">
+
+	<style type="text/css">
+		.div1{
+			width: 600px;
+			height: 800px;
+			background-color: lightgray;
+		}	
+	</style>
+
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+
+	<script type="text/javascript">
+
+		var svgDims = {width:800, height: 800};
+		var margin = {top: 20, right: 20, bottom: 20, left: 30};
+		var width = svgDims.width - margin.left - margin.right;
+		var height = svgDims.height - margin.top - margin.bottom;
+
+
+		function timeRefresh(){
+
+			var data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 100];
+			var datetime = ["2019-01-01", "2019-02-01" , "2019-03-01", "2019-04-01", "2019-05-01", "2019-06-01", "2019-07-01", "2019-08-01", "2019-09-01", "2019-10-01"];
+
+			
+
+			//setTimeout("location.reload(true)", 5000);	
+			
+			var svg = d3.select(".div1")
+						.append('svg')
+						.attr("width", svgDims.width)
+						.attr("height", svgDims.height);
+
+			var g = svg.append("g")
+						.attr('transform', 'translate(' + margin.left + "," + margin.top + ")");
+
+			//definindo escalas e domínios
+			var x_scale = d3.scaleLinear().range([0, width]);
+			var y_scale = d3.scaleLinear().range([height, margin.top]);
+
+			x_scale.domain(d3.extent(data, function(d){ return d;}));
+			y_scale.domain(d3.extent(data, function(d){ return d;}));
+
+			x_scale.tickValue
+
+			//adicionando eixos
+			var x_axis = d3.axisBottom().scale(x_scale);
+			var y_axis = d3.axisLeft().scale(y_scale);
+
+			//add ticks
+			svg.append("g")
+				.attr("transform","translate(" + margin.left + "," + height + ")")
+				.call(x_axis);
+
+			svg.append("g")
+				.attr("transform","translate(" + margin.left + ", 0)")
+				.call(y_axis);
+
+		};
+
+		function join(data, line_y){
+			var data_datum = [];
+
+			for( i = 0; i < data.length; i++){ 
+				data_datum.push({x : data[ i ], y : line_y[ i ]});
+			};
+
+			return data_datum;	
+		};
+
+	</script>
+
+</head>
+<!-- <body onload="timeRefresh()"> -->
+<body> 
+	<h1>Jornada do cliente</h1>
+	<div class="div1">
+		<script type="text/javascript">
+
+		var svgDims = {width:800, height: 800};
+		var margin = {top: 20, right: 20, bottom: 20, left: 30};
+		var width = svgDims.width - margin.left - margin.right;
+		var height = svgDims.height - margin.top - margin.bottom;
+
+		var data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+		var line_y = [10, 20, 30, 32, 29, 26, 34, 35, 36, 37, 28, 22, 25, 19, 18];
+
+		var datetime = ["2019-01-01", "2019-02-01" , "2019-03-01", "2019-04-01", "2019-05-01", "2019-06-01", "2019-07-01", "2019-08-01", "2019-09-01", "2019-10-01"];
+
+		//setTimeout("location.reload(true)", 5000);	
+		
+		var svg = d3.select(".div1")
+					.append('svg')
+					.attr("width", svgDims.width)
+					.attr("height", svgDims.height);
+
+		var g = svg.append("g")
+					.attr('transform', 'translate(' + margin.left + "," + margin.top + ")");
+
+		//definindo escalas e domínios
+		var x_scale = d3.scaleLinear().range([0, width]);
+		var y_scale = d3.scaleLinear().range([height, margin.top]);
+
+		x_scale.domain(d3.extent(data, function(d){ return d;}));
+		y_scale.domain(d3.extent(line_y, function(d){ return d;}));
+
+		//adicionando eixos
+		//customizando ticks
+		var x_axis = d3.axisBottom(x_scale)
+						.tickFormat(function(d,i){return datetime[i]})
+						.scale(x_scale);
+
+		var y_axis = d3.axisLeft().scale(y_scale);
+
+		//add ticks
+		svg.append("g")
+			.attr("transform","translate(" + margin.left + "," + height + ")")
+			.call(x_axis);
+
+		//criando linha do gráfico
+		var data_datum = join(data, line_y)
+
+		debugger;
+		var line = d3.line()
+						.x( function( d ) { return x_scale( d.x ) } )
+						.y( function( d ) { return y_scale( d.y ) });
+
+
+		svg.append("g")
+			.attr("transform","translate(" + margin.left + ", 0)")
+			.call(y_axis);
+
+		g.append("path")
+		    .datum(data_datum)
+		    .attr("fill", "none")
+		    .attr("stroke", "steelblue")
+		    .attr("stroke-linejoin", "round")
+		    .attr("stroke-linecap", "round")
+		    .attr("stroke-width", 1.5)
+		    .attr("d", line);
+
+	</script>
+	</div>
+</body>
+</html>
