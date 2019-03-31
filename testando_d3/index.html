@@ -21,13 +21,19 @@
 			d3.csv("petr4.csv", function(data){ 
 				
 				/*definindo dimensões do svg*/
-				var svgDims = { width: 300, height: 300 };
+				var svgDims = { width: 500, height: 300 };
 
-				drawTimeSeries(data, svgDims);
+				/*definindo variáveis para os eixos do gráfico*/
+				var xVar = 'date';
+				var yVar = 'open';
+
+				/*desenhar gráfico*/
+				drawTimeSeries(data, xVar, yVar, 'plot-1', svgDims);
 			});
 		</script>
 
 	</div>
+	<!--
 	<div class = "plot plot-2">
 
 		<script type="text/javascript">
@@ -36,11 +42,15 @@
 				/*definindo dimensões do svg*/
 				var svgDims = { width: 200, height: 200 };
 
-				drawTimeSeries(data, svgDims);
-			});
+				/*definindo variáveis para os eixos do gráfico*/
+				var xVar = 'date';
+				var yVar = 'open';
 
+				/*desenhar gráfico*/
+				drawTimeSeries(data, xVar, yVar, 'plot-1', svgDims);
+			});
 		</script>
 		
-	</div>
+	</div> -->
 </body>
 </html>
